@@ -1,24 +1,10 @@
 import streamlit as st
 import pandas as pd
 import requests
+from navbar import show_navbar
+import joblib
 
 LASTFM_API_KEY = "53a5c43985e65eacab28d9336a49f81c"
-
-def get_lastfm_tracks(mood):
-    url = "http://ws.audioscrobbler.com/2.0/"
-
-    params = {
-        "method": "tag.gettoptracks",
-        "tag": mood.lower(),
-        "api_key": LASTFM_API_KEY,
-        "format": "json",
-        "limit": 20
-    }
-
-    response = requests.get(url, params=params)
-    data = response.json()
-
-    return data["tracks"]["track"]
 
 # Loading data
 df = pd.read_csv("spotify_tracks.csv")
@@ -26,11 +12,56 @@ df = pd.read_csv("spotify_tracks.csv")
 # testing to see if data loads correctly
 # st.write(df.head())
 
+model = joblib.load("mood_model.pkl")
 
 # dropping nulls
 df = df.drop(columns=["Unnamed: 0"])
 
-# Reccomendations based on mood via data set
+# Page setup
+st.set_page_config(
+    page_title="Vibe Finder",
+    page_icon="🎵",
+    layout="centered"
+)
+
+show_navbar()
+
+st.write("Find music based on your mood or vibe.")
+
+# filter by genre 
+genre_options = ["All"] + sorted(df["track_genre"].dropna().unique().tolist())
+
+selected_genre = st.selectbox(
+    "Filter by genre:",
+    genre_options
+)
+
+
+def get_mood_from_text(vibe_text):
+    vibe_text = vibe_text.lower()
+
+    if "happy" in vibe_text or "fun" in vibe_text or "excited" in vibe_text:
+        return "Happy"
+
+    elif "sad" in vibe_text or "cry" in vibe_text or "lonely" in vibe_text:
+        return "Sad"
+
+    elif "chill" in vibe_text or "relax" in vibe_text or "calm" in vibe_text:
+        return "Chill"
+
+    elif "love" in vibe_text or "romantic" in vibe_text or "date" in vibe_text:
+        return "Romantic"
+
+    elif "energy" in vibe_text or "workout" in vibe_text or "hype" in vibe_text:
+        return "Energetic"
+
+    elif "angry" in vibe_text or "mad" in vibe_text or "rage" in vibe_text:
+        return "Angry"
+
+    else:
+        return "Chill"
+
+
 def recommend_songs(mood, data):
     if mood == "Happy":
         filtered = data[(data["energy"] > 0.6) & (data["danceability"] > 0.6)]
@@ -45,117 +76,176 @@ def recommend_songs(mood, data):
         filtered = data[(data["energy"] < 0.5) & (data["acousticness"] > 0.4)]
 
     elif mood == "Romantic":
-        filtered = data[(data["energy"] > 0.3) & (data["energy"] < 0.7) & (data["danceability"] > 0.4)]
+        filtered = data[(data["energy"] > 0.3) & (data["energy"] < 0.7)]
+
+    elif mood == "Angry":
+        filtered = data[data["energy"] > 0.7]
 
     else:
         filtered = data
 
-    return filtered.sample(500)
+    if len(filtered) < 10:
+        return filtered
 
-# Mood from user input 
-def get_mood_from_text(vibe_text):
-    vibe_text = vibe_text.lower()
-
-    if "happy" in vibe_text or "fun" in vibe_text or "party" in vibe_text:
-        return "Happy"
-
-    elif "sad" in vibe_text or "cry" in vibe_text or "heartbreak" in vibe_text or "rain" in vibe_text:
-        return "Sad"
-
-    elif "energy" in vibe_text or "gym" in vibe_text or "hype" in vibe_text or "workout" in vibe_text:
-        return "Energetic"
-
-    elif "chill" in vibe_text or "relax" in vibe_text or "calm" in vibe_text or "late night" in vibe_text:
-        return "Chill"
-
-    elif "love" in vibe_text or "romantic" in vibe_text or "date" in vibe_text:
-        return "Romantic"
-
-    else:
-        return "Chill"
+    return filtered.sample(10)
 
 
+def get_lastfm_tracks(tag):
+    url = "https://ws.audioscrobbler.com/2.0/"
 
-# Page setup
-st.set_page_config(
-    page_title="Vibe Finder",
-    page_icon="🎵",
-    layout="centered"
-)
+    params = {
+        "method": "tag.gettoptracks",
+        "tag": tag.lower(),
+        "api_key": LASTFM_API_KEY,
+        "format": "json",
+        "limit": 10
+    }
 
-# Title
-st.title("🎵 Vibe Finder")
-st.write("Find music based on your mood or vibe.")
+    response = requests.get(url, params=params)
+    data = response.json()
 
-# Mood section
-st.subheader("How are you feeling today?")
+    tracks = data["tracks"]["track"]
 
-if "selected_mood" not in st.session_state:
-    st.session_state.selected_mood = None
+    song_list = []
 
-# Create columns
-col1, col2, col3, col4, col5 = st.columns(5)
+    for track in tracks:
+        song_list.append({
+            "Song": track["name"],
+            "Artist": track["artist"]["name"],
+            "Last.fm Link": track["url"]
+        })
 
-selected_mood = None
+    return pd.DataFrame(song_list)
+
+
+st.markdown("---")
+
+st.subheader("Choose a Mood")
+
+col1, col2, col3 = st.columns(3)
 
 with col1:
-    if st.button("😌 Chill"):
-        st.session_state.selected_mood = "Chill"
+    if st.button("😊 Happy"):
+        st.switch_page("pages/Happy.py")
 
 with col2:
-    if st.button("😁 Happy"):
-        st.session_state.selected_mood = "Happy"
+    if st.button("☁️ Sad"):
+        st.switch_page("pages/Sad.py")
 
 with col3:
-    if st.button("🌧️ Sad"):
-        st.session_state.selected_mood = "Sad"
+    if st.button("😌 Chill"):
+        st.switch_page("pages/Chill.py")
+
+col4, col5, col6 = st.columns(3) 
 
 with col4:
-    if st.button("⚡ Energetic"):
-        st.session_state.selected_mood = "Energetic"
+    if st.button("💜 Romantic"):
+        st.switch_page("pages/Romantic.py")
 
 with col5:
-    if st.button("💜 Romantic"):
-        st.session_state.selected_mood = "Romantic"
-# Text input
+    if st.button("⚡ Energetic"):
+        st.switch_page("pages/Energetic.py")
+
+with col6:
+    if st.button("😡 Angry"):
+        st.switch_page("pages/Angry.py")
+        
 vibe_text = st.text_input(
-    "Or describe your vibe:",
+    "Describe your vibe:",
     placeholder="Late night drive in the rain"
 )
 
-# filter by genre 
-genre_options = ["All"] + sorted(df["track_genre"].dropna().unique().tolist())
-
-selected_genre = st.selectbox(
-    "Filter by genre:",
-    genre_options
-)
-
-
-# Output
-mood = st.session_state.selected_mood
-
-# If user types a vibe, use that instead
 if vibe_text:
     mood = get_mood_from_text(vibe_text)
 
-if mood:
-    st.success(f"Vibe detected: {mood}")
+    st.success(f"Detected Mood: {mood}")
+
+    st.subheader("🎧 Dataset Recommendations")
+    csv_tracks = recommend_songs(mood, df)
+    st.dataframe(csv_tracks)
+
+    st.subheader("🌍 Last.fm API Recommendations")
     api_tracks = get_lastfm_tracks(mood)
+    st.dataframe(api_tracks)
 
-    results = recommend_songs(mood, df)
-
-    if selected_genre != "All":
-        results = results[results["track_genre"] == selected_genre]
+else:
+    st.info("Type a vibe above or choose a mood playlist from the choices above.")   
 
 
-    st.subheader("Dataset Recommendations")
 
-    if results.empty:
-        st.warning("No songs found for this mood and genre. Try another genre.")
-    else:
-        for index, row in results.iterrows():
-            st.write(f"🎧 **{row['track_name']}** by {row['artists']}")
-            st.write(f"Genre: {row['track_genre']}")
-            st.write(f"Popularity: {row['popularity']}")
-            st.write("---")
+
+st.divider()
+
+st.subheader("AI Mood Quiz")
+
+energy_quiz = st.radio(
+    "How energetic do you feel?",
+    [1,2,3,4,5,6,7,8,9,10],
+    horizontal=True
+)
+
+dance_quiz = st.radio(
+    "How upbeat is your mood?",
+    [1,2,3,4,5,6,7,8,9,10],
+    horizontal=True
+)
+
+acoustic_quiz = st.radio(
+    "How relaxed are you feeling?",
+    [1,2,3,4,5,6,7,8,9,10],
+    horizontal=True
+)
+
+valence_quiz = st.radio(
+    "How positive is your mood?",
+    [1,2,3,4,5,6,7,8,9,10],
+    horizontal=True
+)
+
+tempo_quiz = st.radio(
+    "How active do you feel?",
+    [1,2,3,4,5,6,7,8,9,10],
+    horizontal=True
+)
+
+if st.button("Predict Mood"):
+
+    energy = energy_quiz / 10
+    danceability = dance_quiz / 10
+    acousticness = acoustic_quiz / 10
+    valence = valence_quiz / 10
+    tempo = tempo_quiz * 20
+
+    prediction_data = [[
+        danceability,
+        energy,
+        -10.0,
+        0.05,
+        acousticness,
+        0.0,
+        0.1,
+        valence,
+        tempo
+    ]]
+
+    predicted_mood = model.predict(prediction_data)[0]
+
+    st.success(f"Predicted Mood: {predicted_mood}")
+
+    if predicted_mood == "Happy":
+        st.switch_page("pages/Happy.py")
+
+    elif predicted_mood == "Sad":
+        st.switch_page("pages/Sad.py")
+
+    elif predicted_mood == "Chill":
+        st.switch_page("pages/Chill.py")
+
+    elif predicted_mood == "Romantic":
+        st.switch_page("pages/Romantic.py")
+
+    elif predicted_mood == "Energetic":
+        st.switch_page("pages/Energetic.py")
+
+    elif predicted_mood == "Angry":
+        st.switch_page("pages/Angry.py")
