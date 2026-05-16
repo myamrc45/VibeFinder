@@ -2,6 +2,12 @@ import streamlit as st
 import pandas as pd
 import requests
 from navbar import show_navbar
+import joblib   
+
+#loading ML model       
+
+model = joblib.load("mood_model.pkl")   
+
 
 st.set_page_config(page_title="Sad Playlist", page_icon="😢")
 
@@ -45,7 +51,23 @@ st.write("""
 Songs for emotional moments, reflection, and comfort.
 """)
 
-sad_songs_lastfm = get_lastfm_tracks("sad") 
+# AI mood prediction based on song features 
+prediction_data = [[
+    0.30,
+    0.25,
+    -13.0,
+    0.04,
+    0.75,
+    0.05,
+    0.10,
+    0.20,
+    70
+]]
+
+predicted_mood = model.predict(prediction_data)[0]
+st.write("AI Selected Mood:", predicted_mood)
+
+sad_songs_lastfm = get_lastfm_tracks(predicted_mood.lower())
 
 df = pd.read_csv("spotify_tracks.csv")
 

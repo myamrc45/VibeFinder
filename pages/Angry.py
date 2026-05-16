@@ -2,6 +2,12 @@ import streamlit as st
 import pandas as pd
 import requests
 from navbar import show_navbar
+import joblib   
+
+#loading ML model       
+
+model = joblib.load("mood_model.pkl")   
+
 
 st.set_page_config(page_title="Angry Playlist", page_icon="😡")
 
@@ -45,7 +51,26 @@ st.write("""
 Aggressive and intense songs to match strong emotions.
 """)
 
-angry_songs_lastfm = get_lastfm_tracks("angry") 
+# AI mood prediction based on song features 
+
+prediction_data = [[
+    0.40,   # danceability
+    0.98,   # energy
+    -2.0,   # loudness
+    0.18,   # speechiness
+    0.02,   # acousticness
+    0.0,    # instrumentalness
+    0.35,   # liveness
+    0.08,   # valence
+    175     # tempo
+]]
+
+predicted_mood = model.predict(prediction_data)[0]
+
+st.write("AI Selected Mood:", predicted_mood)
+
+angry_songs_lastfm = get_lastfm_tracks(predicted_mood.lower())
+
 
 df = pd.read_csv("spotify_tracks.csv")
 

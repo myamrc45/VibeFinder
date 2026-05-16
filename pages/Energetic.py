@@ -2,6 +2,10 @@ import streamlit as st
 import pandas as pd
 import requests
 from navbar import show_navbar
+import joblib   
+
+#loading ML model
+model = joblib.load("mood_model.pkl")   
 
 st.set_page_config(page_title="Energetic Playlist", page_icon="⚡")
 
@@ -45,7 +49,23 @@ st.write("""
 High-energy songs for workouts, motivation, and hype moments.
 """)
 
-energetic_songs_lastfm = get_lastfm_tracks("energetic") 
+# AI mood prediction based on song features 
+prediction_data = [[
+    0.85,
+    0.95,
+    -4.0,
+    0.07,
+    0.10,
+    0.0,
+    0.25,
+    0.80,
+    155
+]]
+
+predicted_mood = model.predict(prediction_data)[0]
+st.write("AI Selected Mood:", predicted_mood)
+
+energetic_songs_lastfm = get_lastfm_tracks(predicted_mood.lower())
 
 df = pd.read_csv("spotify_tracks.csv")
 

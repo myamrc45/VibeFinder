@@ -10,7 +10,10 @@ df = pd.read_csv("spotify_tracks.csv")
 # Create mood labels based on song features
 def create_mood(row):
 
-    if row["energy"] > 0.75 and row["danceability"] > 0.65:
+    if row["energy"] > 0.7 and row["danceability"] < 0.6 and row["valence"] < 0.3:
+        return "Angry"
+
+    elif row["energy"] > 0.75 and row["danceability"] > 0.65:
         return "Energetic"
 
     elif row["energy"] > 0.6 and row["danceability"] > 0.6:
@@ -55,7 +58,7 @@ X_train, X_test, y_train, y_test = train_test_split(
     random_state=42
 )
 
-# Create and train the model
+# Create and train test
 model = RandomForestClassifier(random_state=42)
 model.fit(X_train, y_train)
 

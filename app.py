@@ -12,6 +12,8 @@ df = pd.read_csv("spotify_tracks.csv")
 # testing to see if data loads correctly
 # st.write(df.head())
 
+# loading model
+
 model = joblib.load("mood_model.pkl")
 
 # dropping nulls
@@ -61,28 +63,10 @@ def get_mood_from_text(vibe_text):
     else:
         return "Chill"
 
+# song recommendation via AI
 
 def recommend_songs(mood, data):
-    if mood == "Happy":
-        filtered = data[(data["energy"] > 0.6) & (data["danceability"] > 0.6)]
-
-    elif mood == "Sad":
-        filtered = data[(data["energy"] < 0.4) & (data["danceability"] < 0.5)]
-
-    elif mood == "Energetic":
-        filtered = data[(data["energy"] > 0.75) & (data["danceability"] > 0.65)]
-
-    elif mood == "Chill":
-        filtered = data[(data["energy"] < 0.5) & (data["acousticness"] > 0.4)]
-
-    elif mood == "Romantic":
-        filtered = data[(data["energy"] > 0.3) & (data["energy"] < 0.7)]
-
-    elif mood == "Angry":
-        filtered = data[data["energy"] > 0.7]
-
-    else:
-        filtered = data
+    filtered = data[data["mood"] == mood]
 
     if len(filtered) < 10:
         return filtered
@@ -208,6 +192,8 @@ tempo_quiz = st.radio(
     horizontal=True
 )
 
+# AI prediction based on quiz answers
+
 if st.button("Predict Mood"):
 
     energy = energy_quiz / 10
@@ -230,8 +216,13 @@ if st.button("Predict Mood"):
 
     predicted_mood = model.predict(prediction_data)[0]
 
-    st.success(f"Predicted Mood: {predicted_mood}")
+    st.write("Predicted Mood:", predicted_mood)
 
+    tracks = get_lastfm_tracks(predicted_mood)
+
+
+
+    st.dataframe(tracks)
     if predicted_mood == "Happy":
         st.switch_page("pages/Happy.py")
 

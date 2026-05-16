@@ -2,6 +2,12 @@ import streamlit as st
 import pandas as pd
 import requests
 from navbar import show_navbar
+import joblib   
+
+#loading ML model       
+
+model = joblib.load("mood_model.pkl")   
+
 
 st.set_page_config(page_title="Chill Playlist", page_icon="😌")
 
@@ -45,7 +51,23 @@ st.write("""
 Relaxing songs for studying, resting, or peaceful vibes.
 """)
 
-chill_songs_lastfm = get_lastfm_tracks("chill") 
+# AI mood prediction based on song features 
+prediction_data = [[
+    0.45,
+    0.40,
+    -10.0,
+    0.04,
+    0.70,
+    0.10,
+    0.10,
+    0.55,
+    90
+]]
+
+predicted_mood = model.predict(prediction_data)[0]
+st.write("AI Selected Mood:", predicted_mood)
+
+chill_songs_lastfm = get_lastfm_tracks(predicted_mood.lower())
 
 df = pd.read_csv("spotify_tracks.csv")
 
