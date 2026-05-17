@@ -3,8 +3,15 @@ import pandas as pd
 import requests
 from navbar import show_navbar
 import joblib
+import base64
+import streamlit.components.v1 as components
 
-LASTFM_API_KEY = "53a5c43985e65eacab28d9336a49f81c"
+# my spotify credentials from secrets.toml
+
+SPOTIFY_CLIENT_ID = st.secrets["SPOTIFY_CLIENT_ID"]
+SPOTIFY_CLIENT_SECRET = st.secrets["SPOTIFY_CLIENT_SECRET"]
+
+# LASTFM_API_KEY = "53a5c43985e65eacab28d9336a49f81c"
 
 # Loading data
 df = pd.read_csv("spotify_tracks.csv")
@@ -74,33 +81,66 @@ def recommend_songs(mood, data):
     return filtered.sample(10)
 
 
-def get_lastfm_tracks(tag):
-    url = "https://ws.audioscrobbler.com/2.0/"
+def get_spotify_token():
+    auth_string = SPOTIFY_CLIENT_ID + ":" + SPOTIFY_CLIENT_SECRET
+    auth_bytes = auth_string.encode("utf-8")
+    auth_base64 = base64.b64encode(auth_bytes).decode("utf-8")
+
+    url = "https://accounts.spotify.com/api/token"
+
+    headers = {
+        "Authorization": "Basic " + auth_base64,
+        "Content-Type": "application/x-www-form-urlencoded"
+    }
+
+    data = {
+        "grant_type": "client_credentials"
+    }
+
+    response = requests.post(url, headers=headers, data=data)
+    return response.json()["access_token"]
+
+# spotify API recommendation based on mood  
+
+def get_spotify_tracks(mood):
+    token = get_spotify_token()
+
+    url = "https://api.spotify.com/v1/search"
+
+    headers = {
+        "Authorization": "Bearer " + token
+    }
 
     params = {
-        "method": "tag.gettoptracks",
-        "tag": tag.lower(),
-        "api_key": LASTFM_API_KEY,
-        "format": "json",
+        "q": mood + " songs",
+        "type": "track",
         "limit": 10
     }
 
-    response = requests.get(url, params=params)
+    response = requests.get(url, headers=headers, params=params)
     data = response.json()
-
-    tracks = data["tracks"]["track"]
 
     song_list = []
 
-    for track in tracks:
+    for item in data["tracks"]["items"]:
         song_list.append({
-            "Song": track["name"],
-            "Artist": track["artist"]["name"],
-            "Last.fm Link": track["url"]
+            "Song": item["name"],
+            "Artist": item["artists"][0]["name"],
+            "Album": item["album"]["name"],
+            "Spotify Link": item["external_urls"]["spotify"],
+            "Album Cover": item["album"]["images"][0]["url"]
         })
 
     return pd.DataFrame(song_list)
 
+
+def show_spotify_embed(track_url):
+    embed_url = track_url.replace(
+        "https://open.spotify.com/track/",
+        "https://open.spotify.com/embed/track/"
+    )
+
+    components.iframe(embed_url, height=152)
 
 st.markdown("---")
 
@@ -148,8 +188,8 @@ if vibe_text:
     csv_tracks = recommend_songs(mood, df)
     st.dataframe(csv_tracks)
 
-    st.subheader("🌍 Last.fm API Recommendations")
-    api_tracks = get_lastfm_tracks(mood)
+    st.subheader("🌍 Spotify API Recommendations")
+    api_tracks = get_spotify_tracks(mood)
     st.dataframe(api_tracks)
 
 else:
@@ -218,7 +258,7 @@ if st.button("Predict Mood"):
 
     st.write("Predicted Mood:", predicted_mood)
 
-    tracks = get_lastfm_tracks(predicted_mood)
+    tracks = get_spotify_tracks(predicted_mood)
 
 
 
