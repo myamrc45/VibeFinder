@@ -41,7 +41,7 @@ def search_spotify_track(song_name, artist_name):
     params = {
         "q": f"{song_name} {artist_name}",
         "type": "track",
-         "market": "US",
+        "market": "US",
         "limit": 1
     }
 
@@ -49,7 +49,12 @@ def search_spotify_track(song_name, artist_name):
     data = response.json()
 
     if "tracks" in data and len(data["tracks"]["items"]) > 0:
-        return data["tracks"]["items"][0]["external_urls"]["spotify"]
+        track = data["tracks"]["items"][0]
+
+        return {
+            "link": track["external_urls"]["spotify"],
+            "cover": track["album"]["images"][0]["url"]
+        }
 
     return None
 
@@ -67,24 +72,20 @@ def get_similar_songs(predicted_mood, user_features,  limit=10, genre_keywords=N
     df = pd.read_csv("spotify_tracks.csv")
     df = df[df["track_name"].str.contains(r"^[A-Za-z0-9\s\.\,\!\?\-\'\&\(\):]+$", regex=True, na=False)]
     df = df[df["artists"].str.contains(r"^[A-Za-z0-9\s\.\,\!\?\-\'\&\(\):]+$", regex=True, na=False)]
-    df = df[df["popularity"] >= 65]
+    df = df[df["popularity"] >= 80]
 
     if "mood" not in df.columns:
         df["mood"] = predicted_mood
 
     mood_songs = df[df["mood"] == predicted_mood].copy()
 
-    mood_songs = mood_songs[mood_songs["popularity"] > 50]
-
     if genre_keywords:
         genre_pattern = "|".join(genre_keywords)
-    else:
-        genre_pattern = ""
 
-    mood_songs = mood_songs[
-        mood_songs["track_genre"].str.lower().str.contains(
-            genre_pattern,
-            na=False
+        mood_songs = mood_songs[
+            mood_songs["track_genre"].str.lower().str.contains(
+                genre_pattern,
+                na=False
         )
     ]
 
@@ -125,9 +126,10 @@ def get_similar_songs(predicted_mood, user_features,  limit=10, genre_keywords=N
     subset=["track_name", "artists"]
 )
 
-    recommendations = recommendations.sample(
-    n=min(limit, len(recommendations))
-)
+    if len(recommendations) > limit:
+        recommendations = recommendations.sample(limit)
+    else:
+        recommendations = recommendations.sample(len(recommendations))
 
     return recommendations
-
+    

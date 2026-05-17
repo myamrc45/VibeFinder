@@ -88,16 +88,36 @@ if st.button("Generate AI Playlist"):
 
     songs = spotify_helpers.get_similar_songs(predicted_mood, user_features, limit=10)
 
+
+
     for index, row in songs.iterrows():
+
         song_name = row["track_name"] if "track_name" in row else row["name"]
         artist = row["artists"] if "artists" in row else row["artist_name"]
 
-        st.subheader(song_name)
-        st.write("Artist:", artist)
+        spotify_data = spotify_helpers.search_spotify_track(song_name, artist)
 
-        spotify_link = spotify_helpers.search_spotify_track(song_name, artist)
+        with st.container(border=True):
 
-        if spotify_link:
-            spotify_helpers.show_spotify_embed(spotify_link)
-        else:
-            st.warning("Could not find this track on Spotify.")
+            st.subheader(song_name)
+            st.caption(f"Artist: {artist}")
+            st.caption("🎵 AI Pick")
+
+            if spotify_data:
+                st.image(spotify_data["cover"], use_container_width=True)
+
+                st.link_button(
+                 "▶ Open in Spotify",
+                 spotify_data["link"])
+
+                spotify_helpers.show_spotify_embed(
+                spotify_data["link"]
+                )
+
+            else:
+                st.warning("Could not find this track on Spotify.")
+
+        st.write("")
+
+
+    

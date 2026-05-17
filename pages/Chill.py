@@ -78,22 +78,32 @@ for index, row in songs.iterrows():
     song_name = row["track_name"]
     artist = row["artists"]
 
-    st.subheader(song_name)
-
-    st.write("Artist:", artist)
-
-    spotify_link = spotify_helpers.search_spotify_track(
+    spotify_data = spotify_helpers.search_spotify_track(
         song_name,
         artist
     )
 
-    if spotify_link:
+    with st.container(border=True):
 
-        spotify_helpers.show_spotify_embed(
-            spotify_link
-        )
+        if spotify_data:
+            st.image(spotify_data["cover"], use_container_width=True)
 
-    else:
-        st.warning(
-            "Could not find this track on Spotify."
-        )
+        st.subheader(song_name)
+        st.caption(f"Artist: {artist}")
+
+        st.write("Mood-based AI recommendation")
+
+        col1, col2, col3 = st.columns([1, 1, 2])
+
+        with col1:
+            st.caption("10 songs")
+
+        with col2:
+            st.caption("AI Pick")
+
+        if spotify_data:
+            spotify_helpers.show_spotify_embed(
+                spotify_data["link"]
+            )
+
+    st.write("")

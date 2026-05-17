@@ -35,16 +35,6 @@ st.set_page_config(
 
 show_navbar()
 
-st.write("Find music based on your mood or vibe.")
-
-# filter by genre 
-genre_options = ["All"] + sorted(df["track_genre"].dropna().unique().tolist())
-
-selected_genre = st.selectbox(
-    "Filter by genre:",
-    genre_options
-)
-
 
 def get_mood_from_text(vibe_text):
     vibe_text = vibe_text.lower()
@@ -142,7 +132,6 @@ def show_spotify_embed(track_url):
 
     components.iframe(embed_url, height=152)
 
-st.markdown("---")
 
 st.subheader("Choose a Mood")
 
