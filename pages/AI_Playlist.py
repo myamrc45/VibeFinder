@@ -4,6 +4,7 @@ from navbar import show_navbar
 import joblib
 import streamlit.components.v1 as components
 import spotify_helpers
+import playlist_helpers
 
 st.set_page_config(page_title="AI Playlist", page_icon="🎧")
 
@@ -118,6 +119,14 @@ if st.button("Generate AI Playlist"):
                 st.warning("Could not find this track on Spotify.")
 
         st.write("")
+
+    if st.button("Save This Playlist"):
+
+        playlist_helpers.save_playlist(
+            predicted_mood, songs
+    )
+
+        st.success("Playlist saved!")
 
 
     
