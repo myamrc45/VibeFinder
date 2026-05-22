@@ -8,7 +8,7 @@ import streamlit.components.v1 as components
 SPOTIFY_CLIENT_ID = st.secrets["SPOTIFY_CLIENT_ID"]
 SPOTIFY_CLIENT_SECRET = st.secrets["SPOTIFY_CLIENT_SECRET"] 
 
-
+# gets tokens to allow spotify API usage
 def get_spotify_token():
     auth_string = SPOTIFY_CLIENT_ID + ":" + SPOTIFY_CLIENT_SECRET
     auth_bytes = auth_string.encode("utf-8")
@@ -28,6 +28,7 @@ def get_spotify_token():
     response = requests.post(url, headers=headers, data=data)
     return response.json()["access_token"]
 
+# Searches for a track on spotify and returns the spotify link and cover image
 
 def search_spotify_track(song_name, artist_name):
     token = get_spotify_token()
@@ -58,6 +59,7 @@ def search_spotify_track(song_name, artist_name):
 
     return None
 
+# embedded links for spotify tracks
 
 def show_spotify_embed(track_url):
     embed_url = track_url.replace(
@@ -67,6 +69,7 @@ def show_spotify_embed(track_url):
 
     components.iframe(embed_url, height=152)
 
+ # generates similar songs based on mood and audio features
 
 def get_similar_songs(predicted_mood, user_features,  limit=10, genre_keywords=None):
     df = pd.read_csv("spotify_tracks.csv")
@@ -88,6 +91,7 @@ def get_similar_songs(predicted_mood, user_features,  limit=10, genre_keywords=N
                 na=False
         )
     ]
+        
 
     if len(mood_songs) == 0:
         mood_songs = df.copy()
@@ -103,6 +107,8 @@ def get_similar_songs(predicted_mood, user_features,  limit=10, genre_keywords=N
         "valence",
         "tempo"
     ]
+
+    # calculates difference between user features and each song
 
     for feature in feature_columns:
         mood_songs[feature + "_diff"] = abs(
@@ -125,6 +131,8 @@ def get_similar_songs(predicted_mood, user_features,  limit=10, genre_keywords=N
     recommendations = recommendations.drop_duplicates(
     subset=["track_name", "artists"]
 )
+
+#  # randomly selects songs from recommendations
 
     if len(recommendations) > limit:
         recommendations = recommendations.sample(limit)

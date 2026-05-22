@@ -21,7 +21,6 @@ def save_playlist(predicted_mood, songs):
     new_data = pd.DataFrame(saved_rows)
 
     if os.path.exists(file_name):
-
         old_data = pd.read_csv(file_name)
 
         full_data = pd.concat(

@@ -76,7 +76,7 @@ if st.button("Generate AI Playlist"):
     user_features = {
         "danceability": danceability,
         "energy": energy,
-        "loudness": -10.0,
+        "loudness": -10.0, # hard coded for simplicity, could be added as a quiz question in the future
         "speechiness": 0.05,
         "acousticness": acousticness,
         "instrumentalness": 0.0,
@@ -89,6 +89,8 @@ if st.button("Generate AI Playlist"):
 
     songs = spotify_helpers.get_similar_songs(predicted_mood, user_features, limit=10)
 
+    st.session_state["last_playlist"] = songs
+    st.session_state["last_mood"] = predicted_mood
 
 
     for index, row in songs.iterrows():
@@ -120,13 +122,18 @@ if st.button("Generate AI Playlist"):
 
         st.write("")
 
-    if st.button("Save This Playlist"):
+if "last_playlist" in st.session_state:
+
+    if st.button("Save This Playlist", key="save_ai_playlist"):
 
         playlist_helpers.save_playlist(
-            predicted_mood, songs
-    )
+            st.session_state["last_mood"],
+            st.session_state["last_playlist"]
+        )
 
         st.success("Playlist saved!")
+
+
 
 
     
