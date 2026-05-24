@@ -132,12 +132,11 @@ def get_similar_songs(predicted_mood, user_features,  limit=10, genre_keywords=N
     subset=["track_name", "artists"]
 )
 
-#  # randomly selects songs from recommendations
+    top_matches = recommendations.head(50)
 
-    if len(recommendations) > limit:
-        recommendations = recommendations.sample(limit)
+    if len(top_matches) > limit:
+        recommendations = top_matches.sample(limit)
     else:
-        recommendations = recommendations.sample(len(recommendations))
+        recommendations = top_matches
 
     return recommendations
-    

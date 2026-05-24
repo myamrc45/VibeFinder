@@ -17,7 +17,7 @@ def show_navbar():
             st.switch_page("pages/Discover.py")
 
     with col3:
-        if st.button("AI Playlist", use_container_width=True):
+        if st.button("Mood Quiz", use_container_width=True):
             st.switch_page("pages/AI_Playlist.py")
 
     with col4:
