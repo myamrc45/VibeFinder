@@ -7,6 +7,7 @@ import spotify_helpers
 import playlist_helpers
 import time
 from theme import apply_theme
+from song_cards import show_song_embed
 
 st.set_page_config(
     page_title="AI Playlist ",
@@ -183,24 +184,10 @@ if generate_clicked or st.session_state.get("refresh_playlist", False):
 
         spotify_data = spotify_helpers.search_spotify_track(song_name, artist)
 
-        with st.container(border=True):
-
-            col1, col2 = st.columns([1, 2])
-
-            with col1:
-                st.image(spotify_data["cover"], width=180)
-
-        with col2:
-            st.subheader(song_name)
-            st.caption(f"Artist: {artist}")
-            st.caption("🎵 AI Pick")
-
-            st.link_button(
-                "▶ Open in Spotify",
+        if spotify_data:
+            spotify_helpers.show_spotify_embed(
                 spotify_data["link"]
-            )
-            
-        st.write("")
+    )
 
 if "last_playlist" in st.session_state:
 
