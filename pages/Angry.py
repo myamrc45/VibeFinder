@@ -4,6 +4,7 @@ from navbar import show_navbar
 import joblib   
 import streamlit.components.v1 as components
 import spotify_helpers   
+from theme import apply_theme
 
 
 #loading ML model       
@@ -11,12 +12,17 @@ import spotify_helpers
 model = joblib.load("mood_model.pkl")   
 
 
-st.set_page_config(page_title="Angry Playlist", page_icon="😡")
+st.set_page_config(
+    page_title="Angry Playlist",
+    layout="wide"
+)
 
 show_navbar()
 
+apply_theme()   
 
-st.title("😡 Angry Playlist")
+
+st.title("Angry Playlist")
 
 st.write("""
 Aggressive and intense songs to match strong emotions.

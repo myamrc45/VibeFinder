@@ -7,17 +7,23 @@ import base64
 import streamlit.components.v1 as components
 import random   
 import spotify_helpers  
+from theme import apply_theme
 
 #loading ML model       
 
 model = joblib.load("mood_model.pkl")   
 
 
-st.set_page_config(page_title="Sad Playlist", page_icon="😢")
+st.set_page_config(
+    page_title="Sad Playlist",
+    layout="wide"
+)
 
 show_navbar()
 
-st.title("😢 Sad Playlist")
+apply_theme()       
+
+st.title("Sad Playlist")
 
 st.write("""
 Songs for emotional moments, reflection, and comfort.

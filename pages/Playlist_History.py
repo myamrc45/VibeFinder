@@ -2,17 +2,19 @@ import streamlit as st
 import playlist_helpers
 import spotify_helpers
 from navbar import show_navbar
+from theme import apply_theme
 
 
 st.set_page_config(
     page_title="Playlist History",
-    page_icon="📚",
     layout="wide"
 )
 
 show_navbar()
 
-st.title("📚 Playlist Library")
+apply_theme()   
+
+st.title("Playlist Library")
 st.write("Your saved playlists organized by mood.")
 
 history = playlist_helpers.load_playlist_history()

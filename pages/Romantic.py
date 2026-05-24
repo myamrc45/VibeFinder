@@ -7,17 +7,22 @@ import base64
 import streamlit.components.v1 as components
 import random
 import spotify_helpers  
+from theme import apply_theme
 
 #loading ML model       
 
 model = joblib.load("mood_model.pkl")   
 
 
-st.set_page_config(page_title="Romantic Playlist", page_icon="💕")
+st.set_page_config(
+    page_title="Romantic Playlist",
+    layout="wide"
+)
 
 show_navbar()
 
-st.title("💕 Romantic Playlist")
+apply_theme()       
+st.title("Romantic Playlist")
 
 st.write("""
 Love songs and soft vibes for date nights and romance.

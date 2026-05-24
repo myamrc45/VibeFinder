@@ -1,11 +1,16 @@
 import streamlit as st
 from navbar import show_navbar
+from theme import apply_theme
 
-st.set_page_config(page_title="Discover", page_icon="🔎")
-
+st.set_page_config(
+    page_title="Discover",
+    layout="wide"
+)
 show_navbar()
 
-st.title("🔎 Discover")
+apply_theme()   
+
+st.title("Discover")
 st.write("Explore different mood playlists.")
 
 if st.button("😊 Happy"):

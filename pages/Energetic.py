@@ -7,16 +7,21 @@ import base64
 import streamlit.components.v1 as components
 import random
 import spotify_helpers  
+from theme import apply_theme
 
 #loading ML model
 model = joblib.load("mood_model.pkl")   
 
-st.set_page_config(page_title="Energetic Playlist", page_icon="⚡")
-
+st.set_page_config(
+    page_title="Energetic Playlist",
+    layout="wide"
+)
 show_navbar()
 
+apply_theme()   
 
-st.title("⚡ Energetic Playlist")
+
+st.title("Energetic Playlist")
 
 st.write("""
 High-energy songs for workouts, motivation, and hype moments.

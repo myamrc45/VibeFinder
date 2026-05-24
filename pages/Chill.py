@@ -7,17 +7,23 @@ import base64
 import streamlit.components.v1 as components
 import random   
 import spotify_helpers  
+from theme import apply_theme
 
 #loading ML model       
 
 model = joblib.load("mood_model.pkl")   
 
 
-st.set_page_config(page_title="Chill Playlist", page_icon="😌")
+st.set_page_config(
+    page_title="Chill Playlist",
+    layout="wide"
+)
 
 show_navbar()
 
-st.title("😌 Chill Playlist")
+apply_theme()   
+
+st.title("Chill Playlist")
 
 st.write("""
 Relaxing songs for studying, resting, or peaceful vibes.

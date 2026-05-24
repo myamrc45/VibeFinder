@@ -1,13 +1,15 @@
 import streamlit as st
 from navbar import show_navbar
+from theme import apply_theme
 
 st.set_page_config(
     page_title="Profile",
-    page_icon="👤",
-    layout="centered"
+    layout="wide"
 )
 
 show_navbar()
+
+apply_theme()       
 
 st.header("Profile")
 

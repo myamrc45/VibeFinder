@@ -1,11 +1,14 @@
 import streamlit as st
 from navbar import show_navbar
+from theme import apply_theme
 
 st.set_page_config(page_title="About", page_icon="ℹ️")
 
 show_navbar()
 
-st.title("ℹ️ About Vibe Finder")
+apply_theme()       
+
+st.title("About Vibe Finder")
 st.write("""
 Vibe Finder is a music recommendation app that helps users find songs based on their mood.
 

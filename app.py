@@ -5,6 +5,7 @@ from navbar import show_navbar
 import joblib
 import base64
 import streamlit.components.v1 as components
+from theme import apply_theme
 
 # my spotify credentials from secrets.toml
 
@@ -30,10 +31,12 @@ df = df.drop(columns=["Unnamed: 0"])
 st.set_page_config(
     page_title="Vibe Finder",
     page_icon="🎵",
-    layout="centered"
+    layout="wide"
 )
 
 show_navbar()
+
+apply_theme()   
 
 
 def get_mood_from_text(vibe_text):
@@ -138,29 +141,29 @@ st.subheader("Choose a Mood")
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    if st.button("😊 Happy"):
+    if st.button("😊 Happy",use_container_width=True):
         st.switch_page("pages/Happy.py")
 
 with col2:
-    if st.button("☁️ Sad"):
+    if st.button("☁️ Sad",use_container_width=True):
         st.switch_page("pages/Sad.py")
 
 with col3:
-    if st.button("😌 Chill"):
+    if st.button("😌 Chill",use_container_width=True):
         st.switch_page("pages/Chill.py")
 
 col4, col5, col6 = st.columns(3) 
 
 with col4:
-    if st.button("💜 Romantic"):
+    if st.button("💜 Romantic",use_container_width=True):
         st.switch_page("pages/Romantic.py")
 
 with col5:
-    if st.button("⚡ Energetic"):
+    if st.button("⚡ Energetic",use_container_width=True):
         st.switch_page("pages/Energetic.py")
 
 with col6:
-    if st.button("😡 Angry"):
+    if st.button("😡 Angry",use_container_width=True):
         st.switch_page("pages/Angry.py")
         
 vibe_text = st.text_input(

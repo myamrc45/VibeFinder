@@ -6,15 +6,19 @@ import streamlit.components.v1 as components
 import spotify_helpers
 import playlist_helpers
 import time
+from theme import apply_theme
 
-st.set_page_config(page_title="AI Playlist", page_icon="🎧")
+st.set_page_config(
+    page_title="AI Playlist ",
+    layout="wide"
+)
 
 # loading ML model
 model = joblib.load("mood_model.pkl")   
 
 show_navbar()   
 
-
+apply_theme()
 
 # AI recommendation function
 def recommend_songs(df, mood, energy, dance, acoustic, valence, tempo, loudness, speechiness, liveness):
@@ -48,7 +52,7 @@ def recommend_songs(df, mood, energy, dance, acoustic, valence, tempo, loudness,
     return top_matches
 
 
-st.title("🎧 AI Mood Quiz")
+st.title("AI Mood Quiz")
 st.write("Answer the quiz and let AI recommend songs based on your music vibe.")
 
 

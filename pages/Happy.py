@@ -7,18 +7,24 @@ import base64
 import streamlit.components.v1 as components
 import random
 import spotify_helpers  
+from theme import apply_theme
 
 #loading ML model       
 
 model = joblib.load("mood_model.pkl")   
 
 
-st.set_page_config(page_title="Happy Playlist", page_icon="😊")
+st.set_page_config(
+    page_title="Happy Playlist  ",
+    layout="wide"
+)
 
 show_navbar()
 
+apply_theme()   
 
-st.title("😊 Happy Playlist")
+
+st.title("Happy Playlist")
 
 st.write("""
 Songs to boost your mood and keep the good vibes going.
