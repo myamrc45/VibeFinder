@@ -179,15 +179,13 @@ if generate_clicked or st.session_state.get("refresh_playlist", False):
 
     for index, row in songs.iterrows():
 
-        song_name = row["track_name"] if "track_name" in row else row["name"]
-        artist = row["artists"] if "artists" in row else row["artist_name"]
+        if "track_id" in row:
+            spotify_link = "https://open.spotify.com/track/" + str(row["track_id"])
 
-        spotify_data = spotify_helpers.search_spotify_track(song_name, artist)
+            spotify_helpers.show_spotify_embed(spotify_link)
 
-        if spotify_data:
-            spotify_helpers.show_spotify_embed(
-                spotify_data["link"]
-    )
+        else:
+            st.warning(f"Missing Spotify track ID for: {row['song']}")
 
 if "last_playlist" in st.session_state:
 

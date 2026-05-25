@@ -4,11 +4,11 @@ import base64
 import streamlit as st
 import streamlit.components.v1 as components
 
-# spotify credentials from secrets.toml
-SPOTIFY_CLIENT_ID = st.secrets["SPOTIFY_CLIENT_ID"]
-SPOTIFY_CLIENT_SECRET = st.secrets["SPOTIFY_CLIENT_SECRET"] 
 
-# gets tokens to allow spotify API usage
+SPOTIFY_CLIENT_ID = st.secrets["SPOTIFY_CLIENT_ID"]
+SPOTIFY_CLIENT_SECRET = st.secrets["SPOTIFY_CLIENT_SECRET"]
+
+
 def get_spotify_token():
     auth_string = SPOTIFY_CLIENT_ID + ":" + SPOTIFY_CLIENT_SECRET
     auth_bytes = auth_string.encode("utf-8")
@@ -26,12 +26,22 @@ def get_spotify_token():
     }
 
     response = requests.post(url, headers=headers, data=data)
-    return response.json()["access_token"]
 
-# Searches for a track on spotify and returns the spotify link and cover image
+    if response.status_code != 200:
+        return None
+
+    try:
+        token_data = response.json()
+        return token_data["access_token"]
+    except Exception:
+        return None
+
 
 def search_spotify_track(song_name, artist_name):
     token = get_spotify_token()
+
+    if token is None:
+        return None
 
     url = "https://api.spotify.com/v1/search"
 
@@ -39,59 +49,89 @@ def search_spotify_track(song_name, artist_name):
         "Authorization": "Bearer " + token
     }
 
+    query = f"{song_name} {artist_name}"
+    query = query.replace('"', "")
+
     params = {
-        "q": f"{song_name} {artist_name}",
+        "q": query,
         "type": "track",
         "market": "US",
         "limit": 1
     }
 
     response = requests.get(url, headers=headers, params=params)
-    data = response.json()
 
-    if "tracks" in data and len(data["tracks"]["items"]) > 0:
-        track = data["tracks"]["items"][0]
+    if response.status_code != 200:
+        return None
 
-        return {
-            "link": track["external_urls"]["spotify"],
-            "cover": track["album"]["images"][0]["url"]
-        }
+    try:
+        data = response.json()
+    except Exception:
+        return None
 
-    return None
+    if "tracks" not in data:
+        return None
 
-# embedded links for spotify tracks
+    if "items" not in data["tracks"]:
+        return None
+
+    if len(data["tracks"]["items"]) == 0:
+        return None
+
+    track = data["tracks"]["items"][0]
+
+    cover = ""
+
+    if track["album"]["images"]:
+        cover = track["album"]["images"][0]["url"]
+
+    return {
+        "link": track["external_urls"]["spotify"],
+        "cover": cover,
+        "name": track["name"],
+        "artist": track["artists"][0]["name"]
+    }
+
 
 def show_spotify_embed(track_url):
+    if track_url is None:
+        return
+
     embed_url = track_url.replace(
         "https://open.spotify.com/track/",
         "https://open.spotify.com/embed/track/"
     )
 
-    components.iframe(embed_url, height=152)
+    components.iframe(
+        embed_url,
+        height=152,
+        scrolling=False
+    )
 
- # generates similar songs based on mood and audio features
 
-def get_similar_songs(predicted_mood, user_features,  limit=10, genre_keywords=None):
+def get_similar_songs(predicted_mood, user_features, limit=10, genre_keywords=None):
     df = pd.read_csv("spotify_tracks.csv")
-    df = df[df["track_name"].str.contains(r"^[A-Za-z0-9\s\.\,\!\?\-\'\&\(\):]+$", regex=True, na=False)]
-    df = df[df["artists"].str.contains(r"^[A-Za-z0-9\s\.\,\!\?\-\'\&\(\):]+$", regex=True, na=False)]
-    df = df[df["popularity"] >= 80]
+
+    df = df[df["track_name"].str.contains(r"^[A-Za-z0-9\s\.\,\!\?\-\'\&\(\)]+$", regex=True, na=False)]
+    df = df[df["artists"].str.contains(r"^[A-Za-z0-9\s\.\,\!\?\-\'\&\(\)]+$", regex=True, na=False)]
+
+    if "popularity" in df.columns:
+        df = df[df["popularity"] >= 20]
 
     if "mood" not in df.columns:
         df["mood"] = predicted_mood
 
     mood_songs = df[df["mood"] == predicted_mood].copy()
 
-    if genre_keywords:
+    if genre_keywords and "track_genre" in mood_songs.columns:
         genre_pattern = "|".join(genre_keywords)
 
         mood_songs = mood_songs[
-            mood_songs["track_genre"].str.lower().str.contains(
+            mood_songs["track_genre"].astype(str).str.lower().str.contains(
                 genre_pattern,
                 na=False
-        )
-    ]
-        
+            )
+        ]
 
     if len(mood_songs) == 0:
         mood_songs = df.copy()
@@ -108,29 +148,33 @@ def get_similar_songs(predicted_mood, user_features,  limit=10, genre_keywords=N
         "tempo"
     ]
 
-    # calculates difference between user features and each song
+    for feature in feature_columns:
+        if feature in mood_songs.columns and feature in user_features:
+            mood_songs[feature + "_diff"] = abs(
+                mood_songs[feature] - user_features[feature]
+            )
+
+    mood_songs["similarity_score"] = 0
 
     for feature in feature_columns:
-        mood_songs[feature + "_diff"] = abs(
-            mood_songs[feature] - user_features[feature]
-        )
+        diff_col = feature + "_diff"
 
-    mood_songs["similarity_score"] = (
-        mood_songs["danceability_diff"] +
-        mood_songs["energy_diff"] +
-        mood_songs["acousticness_diff"] +
-        mood_songs["valence_diff"] +
-        mood_songs["tempo_diff"] / 200
-    )
+        if diff_col in mood_songs.columns:
+            if feature == "tempo":
+                mood_songs["similarity_score"] += mood_songs[diff_col] / 200
+            elif feature == "loudness":
+                mood_songs["similarity_score"] += mood_songs[diff_col] / 60
+            else:
+                mood_songs["similarity_score"] += mood_songs[diff_col]
 
     recommendations = mood_songs.sort_values(
-    by=["similarity_score", "popularity"],
-    ascending=[True, False]
-)
+        by=["similarity_score", "popularity"],
+        ascending=[True, False]
+    )
 
     recommendations = recommendations.drop_duplicates(
-    subset=["track_name", "artists"]
-)
+        subset=["track_name", "artists"]
+    )
 
     top_matches = recommendations.head(50)
 

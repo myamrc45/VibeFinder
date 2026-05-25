@@ -15,8 +15,9 @@ def save_playlist(predicted_mood, songs):
             "date": datetime.now().strftime("%Y-%m-%d %H:%M"),
             "mood": predicted_mood,
             "song": row["track_name"],
-            "artist": row["artists"]
-        })
+            "artist": row["artists"],
+            "track_id": row["track_id"]
+    })
 
     new_data = pd.DataFrame(saved_rows)
 

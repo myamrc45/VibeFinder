@@ -5,6 +5,7 @@ from navbar import show_navbar
 import joblib
 import base64
 import streamlit.components.v1 as components
+import spotify_helpers
 from theme import apply_theme
 
 # my spotify credentials from secrets.toml
@@ -66,13 +67,16 @@ def get_mood_from_text(vibe_text):
 # song recommendation via AI
 
 def recommend_songs(mood, data):
+
+    if "mood" not in data.columns:
+        return data.sample(10)
+
     filtered = data[data["mood"] == mood]
 
-    if len(filtered) < 10:
-        return filtered
+    if len(filtered) == 0:
+        return data.sample(10)
 
-    return filtered.sample(10)
-
+    return filtered.sample(min(10, len(filtered)))
 
 def get_spotify_token():
     auth_string = SPOTIFY_CLIENT_ID + ":" + SPOTIFY_CLIENT_SECRET
@@ -176,13 +180,26 @@ if vibe_text:
 
     st.success(f"Detected Mood: {mood}")
 
-    st.subheader("🎧 Dataset Recommendations")
-    csv_tracks = recommend_songs(mood, df)
-    st.dataframe(csv_tracks)
+    st.subheader("🌍Recommendations")
 
-    st.subheader("🌍 Spotify API Recommendations")
-    api_tracks = get_spotify_tracks(mood)
-    st.dataframe(api_tracks)
+    spotify_tracks = spotify_helpers.get_similar_songs(
+    mood,
+    {
+        "danceability": 0.5,
+        "energy": 0.5,
+        "loudness": -10.0,
+        "speechiness": 0.05,
+        "acousticness": 0.3,
+        "instrumentalness": 0.0,
+        "liveness": 0.1,
+        "valence": 0.5,
+        "tempo": 100
+    },
+    limit=10
+)
+    for index, row in spotify_tracks.iterrows():
 
-else:
-    st.info("Type a vibe above or choose a mood playlist from the choices above.")   
+        spotify_link = "https://open.spotify.com/track/" + str(row["track_id"])
+
+        spotify_helpers.show_spotify_embed(spotify_link)
+    

@@ -36,18 +36,10 @@ else:
 
             for index, row in mood_songs.iterrows():
 
-                spotify_data = spotify_helpers.search_spotify_track(
-                    row["song"],
-                    row["artist"]
-                )
+                if "track_id" in row:
+                    spotify_link = "https://open.spotify.com/track/" + str(row["track_id"])
 
-                if spotify_data:
+                    spotify_helpers.show_spotify_embed(spotify_link)
 
-                    spotify_helpers.show_spotify_embed(
-                        spotify_data["link"]
-                    )
-
-                else:
-                    st.warning(
-                        f"Could not find {row['song']} on Spotify."
-                    )
+            else:
+                st.warning(f"Missing Spotify track ID for: {row['song']}")  
